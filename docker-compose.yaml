@@ -1,0 +1,36 @@
+services:
+  deeplabcut:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: deeplabcut:agx-orin
+    container_name: dlc_agx_orin
+    restart: "no"
+    runtime: nvidia
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    network_mode: host
+    ipc: host
+
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - .:/app
+
+    stdin_open: true
+    tty: true
+    working_dir: /app
+    command: bash -lc "pip3 install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8019"

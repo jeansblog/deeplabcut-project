@@ -1,0 +1,8 @@
+.venv/*
+app/__pycache__/*
+projects/*
+tests/*
+yorkie_walk_walk_motion.webm
+Dog_Gallop_Loop.gif
+CatJump.gif
+pytest.ini

@@ -1,0 +1,87 @@
+# DeepLabCut SuperAnimal 動画解析アプリ
+
+動画をアップロードすると、DeepLabCut の事前学習済み SuperAnimal モデルで四足動物の姿勢を推定する Web アプリです。推定結果のラベル付き動画や座標データを確認できるほか、キーポイントの動きの可視化・距離計算・軌跡動画の作成ができます。
+
+## 主な機能
+
+- 動画をアップロードして、バックグラウンドで姿勢推定を実行
+- ラベル付き動画と推定結果ファイル（JSON、HDF5 など）の表示・ダウンロード
+- 個体とキーポイントを選んで、座標や動きのグラフを表示
+- 信頼度しきい値を指定して、移動距離・経過時間・平均速度を計算
+- 選択したキーポイントの軌跡を元動画に重ねた MP4 を作成
+- 動画の FPS と実寸換算値を設定ファイルに保存し、次回以降も利用
+
+## 処理の流れ
+
+1. ブラウザーから動画を送信します。対応形式は MP4、AVI、MOV、MKV、WMV です。
+2. FastAPI がアップロード動画を `projects/uploads/` に保存し、ジョブをキューに登録します。
+3. バックグラウンド処理が DeepLabCut の `superanimal_quadruped` モデル（HRNet-W32、Faster R-CNN 検出器）で推論し、結果を `projects/results/<ジョブID>/` に保存します。
+4. ブラウザーがジョブの状態を定期的に確認し、完了後にラベル付き動画、結果ファイル、座標グラフを表示します。
+5. 必要に応じて個体・キーポイント・信頼度しきい値を選び、距離や速度を確認したり、軌跡入り動画を生成したりできます。
+
+推論ジョブは最大 2 件まで同時に処理されます。ジョブ状態はアプリケーションのメモリー上に保持されるため、サーバーを再起動すると一覧や状態はリセットされます。アップロード動画や生成ファイルは、サーバー上の `projects/` 配下に保存されます。
+
+## 動きの計測
+
+座標 JSON から個体とキーポイントを選択すると、フレームごとの X/Y 座標、XY 軌跡、フレーム間の移動を表示します。信頼度がしきい値未満の検出点や欠損点は計測から除外し、検出が連続していないフレーム間は移動距離に含めません。
+
+実際の距離・速度を計算するには、撮影動画の FPS と `pixels_per_cm`（1 cm あたりのピクセル数）を入力します。例えば、実寸 10 cm の基準物が動画上で 125 px の場合、`pixels_per_cm` は 12.5 です。これらの値は `projects/motion_settings.json` に保存されます。設定しない場合、移動量は px/frame で表示され、実距離や時間に基づく速度は算出されません。
+
+軌跡入り動画では、選択したキーポイントを色分けして元動画に重ねます。検出が途切れた箇所は線でつながず、元動画の音声があれば出力に含めます。
+
+## 起動方法
+
+この構成は NVIDIA Jetson（L4T / NVIDIA コンテナランタイム）を想定しています。Docker と Docker Compose、およびホスト側の NVIDIA コンテナ対応環境が必要です。
+
+```bash
+docker compose up --build
+```
+
+起動後、ブラウザーで [http://localhost:8019](http://localhost:8019) を開きます。Compose 設定ではホストネットワークを使用します。初回起動時はコンテナ内で依存パッケージをインストールするため、時間がかかることがあります。
+
+### コンテナを使わずに起動する場合
+
+NVIDIA Jetson 対応の Python / DeepLabCut 環境を用意したうえで、依存関係をインストールし、プロジェクトのルートディレクトリから実行します。
+
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8019
+```
+
+DeepLabCut と FFmpeg も別途利用可能である必要があります。Dockerfile では DeepLabCut をインストールし、FFmpeg を用意しています。
+
+## API
+
+| メソッド | パス | 説明 |
+| --- | --- | --- |
+| `GET` | `/` | Web 画面を表示 |
+| `GET` | `/health` | ヘルスチェック |
+| `POST` | `/api/inference` | 動画をアップロードして推論ジョブを開始 |
+| `GET` | `/api/jobs` | メモリー上のジョブ一覧を取得 |
+| `GET` | `/api/jobs/{job_id}` | ジョブの状態と結果情報を取得 |
+| `GET` | `/api/results/{job_id}` | 完了したジョブの推論結果を取得 |
+| `GET` | `/api/results/{job_id}/files/{filename}` | 生成ファイルを取得 |
+| `POST` | `/api/jobs/{job_id}/trajectory-video` | 指定したキーポイントの軌跡入り動画を作成 |
+| `GET` | `/api/settings/motion` | FPS と距離換算値を取得 |
+| `PUT` | `/api/settings/motion` | FPS と距離換算値を保存 |
+
+推論ジョブ開始時のリクエストは `multipart/form-data` で、動画ファイルのフィールド名は `file` です。軌跡動画の作成では、個体番号 `individual`、キーポイント番号の配列 `bodyparts`、信頼度しきい値 `confidence_threshold` を JSON で指定します。
+
+## ファイル構成
+
+| パス | 役割 |
+| --- | --- |
+| `app/main.py` | FastAPI アプリ、HTTP API、ジョブ管理、設定の保存 |
+| `app/inference.py` | DeepLabCut 推論、出力ファイル整理、動画変換、軌跡動画作成 |
+| `app/templates/index.html` | アップロード、結果表示、グラフ、設定操作を行う Web 画面 |
+| `projects/uploads/` | アップロードされた動画 |
+| `projects/results/` | 推論結果と生成動画 |
+| `projects/motion_settings.json` | 動きの計測設定 |
+| `tests/test_app.py` | API と軌跡動画処理のテスト |
+| `Dockerfile` / `docker-compose.yaml` | NVIDIA Jetson 向けコンテナの構築・起動設定 |
+
+## テスト
+
+```bash
+pytest
+```
