@@ -77,5 +77,4 @@ DeepLabCut と FFmpeg も別途利用可能である必要があります。Dock
 | `projects/uploads/` | アップロードされた動画 |
 | `projects/results/` | 推論結果と生成動画 |
 | `projects/motion_settings.json` | 動きの計測設定 |
-| `tests/test_app.py` | API と軌跡動画処理のテスト |
 | `Dockerfile` / `docker-compose.yaml` | NVIDIA Jetson 向けコンテナの構築・起動設定 |
