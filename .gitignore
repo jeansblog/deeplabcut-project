@@ -7,3 +7,4 @@ Dog_Gallop_Loop.gif
 CatJump.gif
 pytest.ini
 .gitignore
+.env

@@ -25,7 +25,8 @@ services:
       - PYTHONUNBUFFERED=1
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
-
+      - HF_TOKEN=${HF_TOKEN}
+      
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - .:/app

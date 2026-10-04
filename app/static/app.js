@@ -92,31 +92,7 @@ const videoInput = document.getElementById('videoInput');
                 <label>pixels_per_cm（1 cm あたりの px）
                   <input id="pixelsPerCm" type="number" min="0" step="any" placeholder="例: 12.5" />
                 </label>
-                <label>信頼度の下限 <span id="confidenceValue">0.50</span>
-                  <input id="confidenceThreshold" type="range" min="0" max="1" step="0.05" value="0.5" />
-                </label>
               </div>
-              <h3>元動画に軌跡を描画</h3>
-              <p class="muted chart-note">選択したキーポイントを色分けし、信頼度の下限以上の軌跡だけをMP4に書き出します。検出が途切れた区間は線をつなぎません。</p>
-              <div id="trajectoryBodyparts" class="trajectory-points"></div>
-              <div class="upload-box">
-                <button id="exportTrajectoryBtn" type="button">軌跡入りMP4を作成</button>
-              </div>
-              <p id="trajectoryExportMessage" class="muted chart-note" role="status"></p>
-              <video id="trajectoryPreview" controls playsinline hidden></video>
-              <div id="trajectoryDownload" class="file-list"></div>
-              <h3>骨格動画</h3>
-              <fieldset class="skeleton-mode">
-                <legend>背景</legend>
-                <label><input type="radio" name="skeletonBackground" value="video" checked />元動画</label>
-                <label><input type="radio" name="skeletonBackground" value="black" />黒背景</label>
-              </fieldset>
-              <div class="upload-box">
-                <button id="exportSkeletonBtn" type="button">骨格動画を作成</button>
-              </div>
-              <p id="skeletonExportMessage" class="muted chart-note" role="status"></p>
-              <video id="skeletonPreview" controls playsinline hidden></video>
-              <div id="skeletonDownload" class="file-list"></div>
               <p class="muted chart-note">FPS と pixels_per_cm は撮影条件に合わせて入力してください。pixels_per_cm は基準物の px 数 ÷ 実寸 (cm) です（例: 10 cm が 125 px なら 12.5）。値はこのサーバーのJSON設定ファイルに自動保存されます。</p>
               <p id="motionSettingsMessage" class="muted chart-note" role="status"></p>
               <dl class="motion-metrics" aria-live="polite">
@@ -147,6 +123,38 @@ const videoInput = document.getElementById('videoInput');
                   <p id="displacementNote" class="muted chart-note">隣接する有効フレーム間の移動距離（px/frame）。未検出区間は線をつなぎません。</p>
                 </section>
               </div>
+            </section>
+          `);
+
+          html.push(`
+            <section class="card">
+              <h2>軌跡・骨格動画</h2>
+              <div class="chart-controls">
+                <label>信頼度の下限 <span id="confidenceValue">0.50</span>
+                  <input id="confidenceThreshold" type="range" min="0" max="1" step="0.05" value="0.5" />
+                </label>
+              </div>
+              <h3>元動画に軌跡を描画</h3>
+              <p class="muted chart-note">選択したキーポイントを色分けし、信頼度の下限以上の軌跡だけをMP4に書き出します。検出が途切れた区間は線をつなぎません。</p>
+              <div id="trajectoryBodyparts" class="trajectory-points"></div>
+              <div class="upload-box">
+                <button id="exportTrajectoryBtn" type="button">軌跡入りMP4を作成</button>
+              </div>
+              <p id="trajectoryExportMessage" class="muted chart-note" role="status"></p>
+              <video id="trajectoryPreview" controls playsinline hidden></video>
+              <div id="trajectoryDownload" class="file-list"></div>
+              <h3>骨格動画</h3>
+              <fieldset class="skeleton-mode">
+                <legend>背景</legend>
+                <label><input type="radio" name="skeletonBackground" value="video" checked />元動画</label>
+                <label><input type="radio" name="skeletonBackground" value="black" />黒背景</label>
+              </fieldset>
+              <div class="upload-box">
+                <button id="exportSkeletonBtn" type="button">骨格動画を作成</button>
+              </div>
+              <p id="skeletonExportMessage" class="muted chart-note" role="status"></p>
+              <video id="skeletonPreview" controls playsinline hidden></video>
+              <div id="skeletonDownload" class="file-list"></div>
             </section>
           `);
         }
