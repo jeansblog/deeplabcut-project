@@ -68,10 +68,12 @@ const videoInput = document.getElementById('videoInput');
         const videoUrl = data.video_url;
         const jsonFile = files.find(file => file.extension === '.json');
 
-        const html = [];
+        const resultCards = [];
+        const motionCards = [];
+        const videoToolsCards = [];
 
         if (videoUrl) {
-          html.push(`
+          resultCards.push(`
             <div class="card">
               <h2>ラベル付き動画</h2>
               <video controls src="${videoUrl}"></video>
@@ -80,7 +82,7 @@ const videoInput = document.getElementById('videoInput');
         }
 
         if (jsonFile) {
-          html.push(`
+          motionCards.push(`
             <section class="card">
               <h2>キーポイントの動き・距離と時間の評価</h2>
               <div class="chart-controls">
@@ -126,14 +128,9 @@ const videoInput = document.getElementById('videoInput');
             </section>
           `);
 
-          html.push(`
+          videoToolsCards.push(`
             <section class="card">
               <h2>軌跡・骨格動画</h2>
-              <div class="chart-controls">
-                <label>信頼度の下限 <span id="confidenceValue">0.50</span>
-                  <input id="confidenceThreshold" type="range" min="0" max="1" step="0.05" value="0.5" />
-                </label>
-              </div>
               <h3>元動画に軌跡を描画</h3>
               <p class="muted chart-note">選択したキーポイントを色分けし、信頼度の下限以上の軌跡だけをMP4に書き出します。検出が途切れた区間は線をつなぎません。</p>
               <div id="trajectoryBodyparts" class="trajectory-points"></div>
@@ -159,7 +156,7 @@ const videoInput = document.getElementById('videoInput');
           `);
         }
 
-        html.push(`
+        resultCards.push(`
           <div class="card">
             <h2>生成ファイル</h2>
             <div class="file-list">
@@ -168,15 +165,66 @@ const videoInput = document.getElementById('videoInput');
           </div>
         `);
 
-        html.push(`
+        resultCards.push(`
           <div class="card">
             <h2>JSON</h2>
             <pre>${JSON.stringify(data.result || {}, null, 2)}</pre>
           </div>
         `);
 
-        results.innerHTML = html.join('');
+        results.innerHTML = `
+          <div class="result-tabs">
+            <div class="result-global-controls">
+              <label for="confidenceThreshold">信頼度の下限 <output id="confidenceValue">0.50</output></label>
+              <input id="confidenceThreshold" type="range" min="0" max="1" step="0.05" value="0.5" />
+            </div>
+            <div class="tab-list" role="tablist" aria-label="推論結果">
+              <button id="resultTab" class="tab-button" type="button" role="tab" aria-selected="true" aria-controls="resultPanel" tabindex="0">推論結果</button>
+              <button id="motionTab" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="motionPanel" tabindex="-1">動き・距離と時間</button>
+              <button id="videoToolsTab" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="videoToolsPanel" tabindex="-1">軌跡・骨格動画</button>
+            </div>
+            <section id="resultPanel" class="tab-panel" role="tabpanel" aria-labelledby="resultTab" tabindex="0">
+              ${resultCards.join('')}
+            </section>
+            <section id="motionPanel" class="tab-panel" role="tabpanel" aria-labelledby="motionTab" tabindex="0" hidden>
+              ${motionCards.join('') || '<div class="card"><p class="muted">評価には座標JSONが必要です。</p></div>'}
+            </section>
+            <section id="videoToolsPanel" class="tab-panel" role="tabpanel" aria-labelledby="videoToolsTab" tabindex="0" hidden>
+              ${videoToolsCards.join('') || '<div class="card"><p class="muted">動画作成には座標JSONが必要です。</p></div>'}
+            </section>
+          </div>
+        `;
+        setupResultTabs();
         if (jsonFile) await loadMotionData(jsonFile.url);
+      }
+
+      function setupResultTabs() {
+        const tabs = Array.from(results.querySelectorAll('[role="tab"]'));
+        const activate = (activeTab, focus = false) => {
+          for (const tab of tabs) {
+            const selected = tab === activeTab;
+            tab.setAttribute('aria-selected', String(selected));
+            tab.tabIndex = selected ? 0 : -1;
+            document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+          }
+          if (activeTab.id === 'motionTab') drawMotionCharts();
+          if (focus) activeTab.focus();
+        };
+
+        tabs.forEach((tab, index) => {
+          tab.addEventListener('click', () => activate(tab));
+          tab.addEventListener('keydown', event => {
+            let nextIndex;
+            if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+            if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+            if (event.key === 'Home') nextIndex = 0;
+            if (event.key === 'End') nextIndex = tabs.length - 1;
+            if (nextIndex !== undefined) {
+              event.preventDefault();
+              activate(tabs[nextIndex], true);
+            }
+          });
+        });
       }
 
       const BODY_PARTS = [
