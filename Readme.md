@@ -77,18 +77,20 @@ DeepLabCut と FFmpeg も別途利用可能である必要があります。Dock
 | `GET` | `/api/results/{job_id}` | 完了したジョブの推論結果を取得 |
 | `GET` | `/api/results/{job_id}/files/{filename}` | 生成ファイルを取得 |
 | `POST` | `/api/jobs/{job_id}/trajectory-video` | 指定したキーポイントの軌跡入り動画を作成 |
+| `POST` | `/api/jobs/{job_id}/skeleton-video` | 元動画または黒背景に骨格を描いた動画を作成 |
 | `GET` | `/api/settings/motion` | FPS と距離換算値を取得 |
 | `PUT` | `/api/settings/motion` | FPS と距離換算値を保存 |
 
-推論ジョブ開始時のリクエストは `multipart/form-data` で、動画ファイルのフィールド名は `file` です。軌跡動画の作成では、個体番号 `individual`、キーポイント番号の配列 `bodyparts`、信頼度しきい値 `confidence_threshold` を JSON で指定します。
+推論ジョブ開始時のリクエストは `multipart/form-data` で、動画ファイルのフィールド名は `file` です。軌跡動画の作成では、個体番号 `individual`、キーポイント番号の配列 `bodyparts`、信頼度しきい値 `confidence_threshold` を JSON で指定します。骨格動画では `individual`、`confidence_threshold`、背景表示を切り替える `show_background`（省略時は `true`）を指定します。
 
 ## ファイル構成
 
 | パス | 役割 |
 | --- | --- |
 | `app/main.py` | FastAPI アプリ、HTTP API、ジョブ管理、設定の保存 |
-| `app/inference.py` | DeepLabCut 推論、出力ファイル整理、動画変換、軌跡動画作成 |
+| `app/inference.py` | DeepLabCut 推論、出力ファイル整理、動画変換、軌跡・骨格動画作成 |
 | `app/templates/index.html` | アップロード、結果表示、グラフ、設定操作を行う Web 画面 |
+| `app/static/` | Web画面のスタイルとJavaScript |
 | `projects/uploads/` | アップロードされた動画 |
 | `projects/results/` | 推論結果と生成動画 |
 | `projects/motion_settings.json` | 動きの計測設定 |

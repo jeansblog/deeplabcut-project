@@ -9,9 +9,10 @@ from typing import Any
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app.inference import create_trajectory_video, run_superanimal_inference
+from app.inference import create_skeleton_video, create_trajectory_video, run_superanimal_inference
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = PROJECT_ROOT / "projects" / "uploads"
@@ -31,6 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "app" / "static"), name="static")
 
 
 class MotionSettings(BaseModel):
@@ -42,6 +44,12 @@ class TrajectoryVideoRequest(BaseModel):
     individual: int = Field(ge=0)
     bodyparts: list[int] = Field(min_length=1)
     confidence_threshold: float = Field(ge=0, le=1)
+
+
+class SkeletonVideoRequest(BaseModel):
+    individual: int = Field(ge=0)
+    confidence_threshold: float = Field(ge=0, le=1)
+    show_background: bool = True
 
 
 def _motion_settings_data(settings: MotionSettings) -> dict[str, float | None]:
@@ -207,6 +215,53 @@ def create_job_trajectory_video(job_id: str, request: TrajectoryVideoRequest) ->
     }
     job["result_files"].append(file_data)
     job["trajectory_video_url"] = file_data["url"]
+    return file_data
+
+
+@app.post("/api/jobs/{job_id}/skeleton-video")
+def create_job_skeleton_video(job_id: str, request: SkeletonVideoRequest) -> dict[str, str | int]:
+    job = JOBS.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.get("status") != "completed":
+        raise HTTPException(status_code=400, detail="Inference job is not completed yet")
+
+    result_dir = RESULTS_DIR / job_id
+    coordinate_file = next(
+        (item for item in job.get("result_files", []) if item["extension"] == ".json"),
+        None,
+    )
+    if coordinate_file is None:
+        raise HTTPException(status_code=400, detail="Coordinate JSON is not available for this job.")
+
+    video_path = Path(job["path"])
+    coordinates_path = result_dir / coordinate_file["name"]
+    if not video_path.is_file() or not coordinates_path.is_file():
+        raise HTTPException(status_code=404, detail="Source video or coordinate JSON was not found.")
+
+    try:
+        output_path = result_dir / f"skeleton_{uuid.uuid4().hex}.mp4"
+        create_skeleton_video(
+            str(video_path),
+            str(coordinates_path),
+            str(output_path),
+            request.individual,
+            request.confidence_threshold,
+            request.show_background,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    file_data = {
+        "name": output_path.name,
+        "extension": ".mp4",
+        "size": output_path.stat().st_size,
+        "url": f"/api/results/{job_id}/files/{output_path.name}",
+    }
+    job["result_files"].append(file_data)
+    job["skeleton_video_url"] = file_data["url"]
     return file_data
 
 

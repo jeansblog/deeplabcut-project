@@ -1,0 +1,46 @@
+*, *::before, *::after { box-sizing: border-box; }
+      :root { --bg: #f3f4f6; --panel: #ffffff; --primary: #2563eb; --success: #15803d; --danger: #b91c1c; --muted: #6b7280; --border: #e5e7eb; }
+      body { font-family: sans-serif; margin: 0; background: linear-gradient(180deg, #eef4ff, var(--bg)); color: #111827; }
+      .container { width: min(100% - 32px, 1440px); margin: 40px auto; background: var(--panel); padding: 32px; border-radius: 16px; box-shadow: 0 10px 30px rgba(15,23,42,0.08); }
+      h1 { margin-top: 0; font-size: 2rem; }
+      .upload-box { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 24px; }
+      input[type="file"] { flex: 1 1 260px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #f9fafb; }
+      button { padding: 12px 18px; font-size: 16px; border: none; border-radius: 10px; background: var(--primary); color: #fff; cursor: pointer; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .status { margin-top: 20px; font-weight: 700; }
+      .status.ok { color: var(--success); }
+      .status.error { color: var(--danger); }
+      .results { min-width: 0; margin-top: 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      .card { min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 18px; background: #f9fafb; }
+      video { display: block; width: 100%; max-width: 100%; max-height: 420px; border-radius: 10px; background: #111827; }
+      .file-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+      .file-pill { display: inline-block; min-width: 0; max-width: 100%; padding: 8px 12px; background: #e0e7ff; color: #1e3a8a; border-radius: 999px; text-decoration: none; overflow-wrap: anywhere; }
+      pre { background: #111827; color: #f9fafb; padding: 16px; border-radius: 10px; overflow: auto; }
+      .muted { color: var(--muted); }
+      .chart-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; margin: 18px 0; }
+      .chart-controls label { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+      .chart-controls select { min-width: 190px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: inherit; }
+      .chart-controls input[type="range"] { width: 180px; }
+      .chart-controls input[type="number"] { width: 150px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: inherit; }
+      .motion-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 16px 0; }
+      .motion-metric { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+      .motion-metric dt { color: var(--muted); font-size: 13px; }
+      .motion-metric dd { margin: 6px 0 0; font-size: 1.2rem; font-weight: 700; }
+      .chart-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+      .chart-panel { min-width: 0; }
+      .chart-panel h3 { margin: 0 0 10px; font-size: 1rem; }
+      .chart-panel canvas { display: block; width: 100%; height: 250px; border: 1px solid var(--border); background: #fff; }
+      .chart-panel.wide { grid-column: auto; }
+      .chart-note { margin: 8px 0 0; font-size: 13px; }
+      .chart-note.error { color: var(--danger); }
+      .chart-legend { display: flex; gap: 14px; margin: 0 0 8px; font-size: 13px; }
+      .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+      .legend-swatch { width: 10px; height: 10px; border-radius: 50%; }
+      .trajectory-points { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px; margin: 8px 0 16px; }
+      .trajectory-points label { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+      .skeleton-mode { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0 8px; padding: 0; border: 0; }
+      .skeleton-mode legend { margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+      .skeleton-mode label { display: inline-flex; align-items: center; gap: 6px; }
+      @media (max-width: 680px) {
+        .container { width: calc(100% - 32px); margin: 16px auto; padding: 20px; }
+      }
